@@ -49,14 +49,6 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         g_output := c_output_screen;
     END;
 
-    PROCEDURE print_to_table (
-        pdescription VARCHAR2
-    ) IS
-    BEGIN
-        INSERT INTO pltap_results ( output_text ) VALUES ( pdescription );
-
-    END;
-
     PROCEDURE print (
         poutput t_pltap_output
     ) IS
