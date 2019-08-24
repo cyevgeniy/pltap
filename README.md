@@ -91,3 +91,53 @@ FAILED: 5
 Failed 1/5 80% ok
 0 hours 0 minutes ,001 seconds
 ```
+
+### Test queries
+
+To test queries results, `results_eq` procedure is used.
+Queries can be passed as sys_refcursors or strings.
+
+```sql
+declare
+    cur_1_got sys_refcursor;
+    cur_1_want sys_refcursor;
+    
+    query_2_got varchar2(1000);
+    query_2_want varchar2(1000);
+begin
+
+    open cur_1_got for
+    select 0.04, trunc(sysdate), 'Closed' from dual
+    union
+    select 1, trunc(sysdate) + 1, 'Open'  from dual
+    union
+    select 2, trunc(sysdate) + 2, 'Another string' from dual;
+
+    open cur_1_want for
+    select 0.04, trunc(sysdate), 'Closed' from dual
+    union
+    select 1, trunc(sysdate) + 1, 'Open'  from dual
+    union
+    select 2, trunc(sysdate) + 2, 'Another string' from dual;
+    
+    query_2_want := 'select sysdate + 1 from dual';
+    query_2_got  := 'select sysdate - 1 from dual';
+
+    pltap.start_test;
+    
+    pltap.results_eq(cur_1_got, cur_1_want, 'Cursors are equal');
+    pltap.results_eq(query_2_got, query_2_want, 'Queries are equal');
+    
+    pltap.end_test;
+end;
+```
+
+Results:
+
+```
+ok 1 Cursors are equal
+not ok: 2 Queries are equal
+FAILED: 2
+Failed 1/2 50% ok
+0 hours 0 minutes 0,002 seconds
+```
