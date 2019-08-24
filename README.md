@@ -50,7 +50,6 @@ declare
         val number
     ) return boolean
     is
-        res boolean;
     begin
         return (val <> 0);
     end;
