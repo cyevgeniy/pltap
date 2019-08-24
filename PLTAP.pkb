@@ -284,7 +284,7 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
             || ' hours '
             || EXTRACT(MINUTE FROM timestamp_diff.diff)
             || ' minutes '
-            || round(EXTRACT(SECOND FROM timestamp_diff.diff), 3)
+            || trim(to_char(round(EXTRACT(SECOND FROM timestamp_diff.diff), 3), '999990D999'))
             || ' seconds'
         INTO
             l_res
