@@ -25,11 +25,12 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
     PROCEDURE print_to_table (
         poutput t_pltap_output
     ) IS
+    PRAGMA autonomous_transaction;
     BEGIN
         FOR i IN 1..poutput.count LOOP
             INSERT INTO pltap_results ( output_text ) VALUES ( poutput(i) );
-
         END LOOP;
+        commit;
     END;
 
     PROCEDURE set_date_format (
@@ -410,9 +411,6 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         g_end_test_time := current_timestamp;
         print_results(g_count_ok, g_failed_ids);
         print_timestamp_diff(g_end_test_time, g_start_test_time);
-        IF g_output = c_output_table THEN
-            COMMIT;
-        END IF;
     END end_test;
 
     FUNCTION get_ok (
