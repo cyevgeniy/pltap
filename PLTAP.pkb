@@ -305,9 +305,6 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         timestamp_1   TIMESTAMP,
         timestamp_2   TIMESTAMP
     ) IS
-        l_secs    NUMBER;
-        l_mins    NUMBER;
-        l_hours   NUMBER;
     BEGIN
         print(get_timestamp_diff(timestamp_1, timestamp_2));
     END;
@@ -372,9 +369,6 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         pcount_ok     NUMBER,
         pfailed_ids   t_failed_ids
     ) IS
-        l_idx                NUMBER;
-      -- Hope we does not reach 4000 limit in string with failed tests
-        l_failed_tests_str   VARCHAR2(4000) := '';
     BEGIN
         print(get_results(pcount_ok, pfailed_ids));
     END;
