@@ -5,6 +5,9 @@ CREATE OR REPLACE PACKAGE pltap AS
 
     PROCEDURE set_output_to_screen;
 
+    procedure set_description(
+        pdescription varchar2);
+
     PROCEDURE start_test;
 
     PROCEDURE start_test (
@@ -26,7 +29,8 @@ CREATE OR REPLACE PACKAGE pltap AS
     );
 
     PROCEDURE print (
-        poutput t_pltap_output
+        poutput t_pltap_output,
+        pdescription VARCHAR2 default null
     );
 
     PROCEDURE ok (
