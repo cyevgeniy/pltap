@@ -13,11 +13,11 @@ create table pltap_results(
 );
 
 create or replace trigger pltap_results_bi
-   before insert on "W"."PLTAP_RESULTS"
+   before insert ON PLTAP_RESULTS
    for each row
 begin
    if inserting then
-      if :NEW."ID" is null then
+      if :NEW.ID is null then
          select SQ_PLTAP_RESULTS.nextval into :NEW."ID" from dual;
       end if;
    end if;
