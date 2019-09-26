@@ -4,7 +4,6 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         TABLE OF NUMBER;
     c_output_table      CONSTANT NUMBER := 1;
     c_output_screen     CONSTANT NUMBER := 2;
-    c_pltap_description constant varchar2(5) := 'pltap';
     g_output            NUMBER := c_output_screen;
     g_count_ok          NUMBER;
     g_start_test_time   TIMESTAMP;
@@ -318,7 +317,7 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         timestamp_2   TIMESTAMP
     ) IS
     BEGIN
-        print(get_timestamp_diff(timestamp_1, timestamp_2), c_pltap_description);
+        print(get_timestamp_diff(timestamp_1, timestamp_2), g_current_description);
     END;
 
     FUNCTION get_percentage_result (
@@ -382,16 +381,18 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         pfailed_ids   t_failed_ids
     ) IS
     BEGIN
-        print(get_results(pcount_ok, pfailed_ids), c_pltap_description);
+        print(get_results(pcount_ok, pfailed_ids), g_current_description);
     END;
 
-    PROCEDURE start_test AS
+    PROCEDURE start_test(
+        pdescription varchar2 default null
+    ) AS
     BEGIN
         g_start_test_time := current_timestamp;
         g_count_ok := 0;
         g_test_id := 0;
         g_failed_ids.DELETE;
-        g_current_description := null;
+        set_description(pdescription);
     END start_test;
 
     FUNCTION get_plan_count (
@@ -405,12 +406,13 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
     END;
 
     PROCEDURE start_test (
-        pplan_count NUMBER
+        pplan_count NUMBER,
+        pdescription varchar2 default null
     ) IS
     BEGIN
-        start_test;
+        start_test(pdescription);
         g_plan_count := pplan_count;
-        print(get_plan_count(g_plan_count), c_pltap_description);
+        print(get_plan_count(g_plan_count), g_current_description);
     END;
 
     PROCEDURE end_test AS

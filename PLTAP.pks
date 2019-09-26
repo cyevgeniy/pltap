@@ -8,10 +8,13 @@ CREATE OR REPLACE PACKAGE pltap AS
     procedure set_description(
         pdescription varchar2);
 
-    PROCEDURE start_test;
+    PROCEDURE start_test(
+        pdescription varchar2 default null
+    );
 
     PROCEDURE start_test (
-        pplan_count NUMBER
+        pplan_count NUMBER,
+        pdescription varchar2 default null
     );
 
     PROCEDURE end_test;
