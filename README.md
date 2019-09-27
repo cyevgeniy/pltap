@@ -141,3 +141,32 @@ FAILED: 2
 Failed 1/2 50% ok
 0 hours 0 minutes 0,002 seconds
 ```
+
+### Save results to table
+
+For quick tests it's normal to "print" output via dbms_output(that is actually pltap does by default),
+but for large test sets it's not a deal. For this we can store results in `pltap_results` table:
+
+```sql
+begin
+    pltap.start_test;
+    
+    pltap.set_output_to_table; -- 'Redirect' output to table 
+    
+    pltap.ok(true, 'true is true');
+    pltap.eq(2, 3, '2 = 3');
+    pltap.eq('John', 'John', 'John is John');
+    
+    pltap.end_test;
+
+end;
+
+```
+
+After this, we can see result:
+
+```sql
+select *
+from pltap_results
+order by id
+```
