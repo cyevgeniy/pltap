@@ -24,11 +24,11 @@ CREATE OR REPLACE PACKAGE pltap AS
     );
 
     PROCEDURE fail (
-        pdescription VARCHAR2
+        pmessage VARCHAR2
     );
 
     PROCEDURE pass (
-        pdescription VARCHAR2
+        pmessage VARCHAR2
     );
 
     PROCEDURE print (

@@ -437,12 +437,12 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
     END;
 
     PROCEDURE pass (
-        pdescription VARCHAR2
+        pmessage VARCHAR2
     ) IS
     BEGIN
         g_count_ok := g_count_ok + 1;
         g_test_id := g_test_id + 1;
-        print(get_ok(g_test_id, pdescription));
+        print(get_ok(g_test_id, pmessage));
     END;
 
     FUNCTION get_notok (
@@ -460,13 +460,13 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
     END;
 
     PROCEDURE fail (
-        pdescription VARCHAR2
+        pmessage VARCHAR2
     ) IS
     BEGIN
         g_test_id := g_test_id + 1;
         g_failed_ids.extend;
         g_failed_ids(g_failed_ids.last) := g_test_id;
-        print(get_notok(g_test_id, pdescription));
+        print(get_notok(g_test_id, pmessage));
     END;
 
     PROCEDURE ok (
