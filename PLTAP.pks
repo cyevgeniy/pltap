@@ -89,4 +89,9 @@ CREATE OR REPLACE PACKAGE pltap AS
         pdescription   VARCHAR2 DEFAULT NULL
     );
 
+    PROCEDURE bulk_run(
+        powner VARCHAR2,
+        pprocedure_name VARCHAR2
+    );
+
 END pltap;

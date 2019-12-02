@@ -550,4 +550,37 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         ok((pgot <> pwant), pdescription);
     END;
 
+    PROCEDURE bulk_run(
+        powner VARCHAR2,
+        pprocedure_name VARCHAR2
+    ) IS
+        l_statement_to_execute clob := '';-- := 'begin' || chr(13) || 'null;';
+    BEGIN
+        for test_procedure in (
+            select ap.owner, ap.object_name, ap.procedure_name
+            from all_procedures ap
+            where ap.owner = trim(upper(powner))
+            and ap.procedure_name = trim(upper(pprocedure_name)))
+        loop
+            l_statement_to_execute := l_statement_to_execute
+                || test_procedure.owner
+                || '.'
+                || test_procedure.object_name
+                || '.'
+                || test_procedure.procedure_name
+                || ';';
+        end loop;
+
+        if l_statement_to_execute is not null then
+            l_statement_to_execute := 'begin'
+                || chr(13)
+                || l_statement_to_execute
+                || chr(13)
+                || 'end;';
+        end if;
+
+        execute immediate l_statement_to_execute;
+
+    END;
+
 END pltap;
