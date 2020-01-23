@@ -170,3 +170,19 @@ select *
 from pltap_results
 order by id
 ```
+
+### Automatic tests execution
+
+Pltap can execute your tests for you:
+
+```sql
+begin
+    pltap.start_test;
+    
+    pltap.bulk_run('YOUR_CHEMA_USER', 'test_package');
+    
+    pltap.end_test;
+end;
+```
+Pltap will scan all packages owned by YOUR_SCHEMA_USER and
+execute stored procedures named `test_package`.
