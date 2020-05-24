@@ -134,7 +134,7 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
       -- Fetch rows with DBMS_SQL package:
 
         WHILE dbms_sql.fetch_rows(l_cursor_id) > 0 LOOP
-            FOR i IN 1..l_column_count LOOP IF ( l_desctab(i).col_type = 1 ) THEN
+            FOR i IN 1..l_column_count LOOP IF ( l_desctab(i).col_type in (1, 96) ) THEN
                 dbms_sql.column_value(l_cursor_id, i, l_strvar);
                 l_qry_result := l_qry_result || l_strvar;
             ELSIF ( l_desctab(i).col_type = 2 ) THEN
