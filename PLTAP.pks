@@ -1,3 +1,12 @@
+-- Copyright(c) 2017-2021 Yevgeniy Chaban <ychbn@ychbn.com>
+--
+-- Permission to use, copy, modify, distribute, and sell this software and its
+-- documentation for any purpose is hereby granted without fee, provided that
+-- the above copyright notice appear in all copies and that both that
+-- copyright notice and this permission notice appear in supporting
+-- documentation.  No representations are made about the suitability of this
+-- software for any purpose.  It is provided "as is" without express or
+-- implied warranty.
 CREATE OR REPLACE PACKAGE pltap AS
     TYPE t_pltap_output IS
         TABLE OF VARCHAR2(4000);

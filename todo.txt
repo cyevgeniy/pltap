@@ -1,0 +1,2 @@
+- Use dbms_crypto for calculating CLOB hash
+- Change formatting(uppercase keywords looks ugly)
