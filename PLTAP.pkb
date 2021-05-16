@@ -341,7 +341,7 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         pfailed_ids   t_failed_ids
     ) RETURN t_pltap_output IS
         l_res                t_pltap_output := t_pltap_output();
-        -- Hope we does not reach 4000 limit in string with failed tests
+        -- I Hope we do not reach 4000 limit in string with failed tests
         l_failed_tests_str   VARCHAR2(4000) := '';
         l_idx                NUMBER;
     BEGIN
