@@ -1,37 +1,38 @@
-Pltap docs
-================================================================================
+*pltap* - lightweight unit testing framework for PL/SQL
 
-Install
---------------------------------------------------------------------------------
 
-Via sqlplus:
+=============================================================================
+INSTALL                                                             
+
+VIA SQLPLUS
 
 Run:
 	@install.sql
-	
-Manual installation:
 
+MANUAL INSTALLATION
+	
 First, run pltap_ddl.sql.
 Then compile pltap_ps.sql and pltap_pb.sql files. That's all.
 
 
-Uninstall
---------------------------------------------------------------------------------
+=============================================================================
+UNINSTALL
 
 In Sqlplus, run:
 	@uninstall.sql
 
-Examples
---------------------------------------------------------------------------------
+=============================================================================
+EXAMPLES
 
-Easy mode
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+EASY MODE
 
     begin
         pltap.start_test;
 
         pltap.eq(2, 3, '2 = 3');
-        pltap.eq('John Doe', 'NotJohnDoe', '"John Doe" is equal to "NotJohnDoe"');
+        pltap.eq('John Doe', 'NotJohnDoe',
+             '"John Doe" is equal to "NotJohnDoe"');
         pltap.eq(to_date('1981.01.23', 'yyyy.mm.dd'),
 	         to_date('1981.01.23', 'yyyy.mm.dd'),
 		 'Dates are equal'
@@ -55,8 +56,7 @@ This will produce output (via dbms_output.put_line):
     Failed 2/4 50% ok
     0 hours 0 minutes ,001 seconds
 
-Test a function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TEST A FUNCTION
 
     declare
         /*
@@ -106,10 +106,10 @@ Result:
 	Failed 1/5 80% ok
 	0 hours 0 minutes ,001 seconds
 
-Test queries
-^^^^^^^^^^^^^^^^^^
+TEST QUERIES
 
-To test query results, results_eq procedure is used. Queries can be passed as sys_refcursors or strings.
+To test query results, results_eq procedure is used. Queries can
+be passed as sys_refcursors or strings.
 
 	declare
 		cur_1_got sys_refcursor;
@@ -152,10 +152,10 @@ Results:
 	Failed 1/2 50% ok
 	0 hours 0 minutes 0,002 seconds
 
-Save results to a table
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SAVE RESULTS TO A TABLE
 
-For quick tests it's normal to "print" output via dbms_output(This is what pltap does by default), but for large test
+For quick tests it's normal to "print" output via dbms_output
+(This is what pltap does by default), but for large test
 sets it's not a deal. In such cases we can save results in the pltap_results table:
 
 	begin
@@ -177,8 +177,7 @@ After that, we can see result:
 	from pltap_results
 	order by id
 
-Automatic tests execution
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AUTOMATIC TESTS EXECUTION
 
 Pltap can execute your tests for you:
 
@@ -190,4 +189,7 @@ Pltap can execute your tests for you:
 		pltap.end_test;
 	end;
 
-It will scan all packages owned by YOUR_SCHEMA_USER and execute stored procedures named test_package.
+It will scan all packages owned by YOUR_SCHEMA_USER and execute stored procedures
+named test_package.
+
+:vim:tw=78:ts=8:noet:ft=help:norl:
