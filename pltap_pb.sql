@@ -12,6 +12,7 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
     g_plan_count        NUMBER := NULL;
     g_date_format       VARCHAR2(100) := 'dd.mm.yyyy hh24:mi:ss';
     g_failed_ids        t_failed_ids := t_failed_ids();
+    g_failed_bulks      t_pltap_output := t_pltap_output();
     g_current_description varchar2(4000) := null;
 
     procedure set_description(
@@ -338,12 +339,15 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
 
     FUNCTION get_results (
         pcount_ok     NUMBER,
-        pfailed_ids   t_failed_ids
+        pfailed_ids   t_failed_ids,
+        pfailed_bulks t_pltap_output
     ) RETURN t_pltap_output IS
         l_res                t_pltap_output := t_pltap_output();
         -- I Hope we do not reach 4000 limit in string with failed tests
         l_failed_tests_str   VARCHAR2(4000) := '';
         l_idx                NUMBER;
+        -- Last index before extending if pfailed_bulks isn't empty
+        l_last_idx           number;
     BEGIN
         l_idx := pfailed_ids.first;
         WHILE ( l_idx IS NOT NULL ) LOOP
@@ -373,15 +377,26 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
                              || get_percentage_result(pcount_ok, pfailed_ids.count)
                              || '% ok';
 
+        if pfailed_bulks.count > 0 then
+            l_last_idx := l_res.last;
+            l_res.extend(1 + pfailed_bulks.count);
+            l_res(l_last_idx + 1) := 'WARNING: Some packages weren''t tested because of exceptions in theirs test procedures:';
+            for i in 1 .. pfailed_bulks.count
+            loop
+                l_res(l_last_idx + 1 + i) := pfailed_bulks(i);
+            end loop;
+        end if;
+
         RETURN l_res;
     END;
 
     PROCEDURE print_results (
         pcount_ok     NUMBER,
-        pfailed_ids   t_failed_ids
+        pfailed_ids   t_failed_ids,
+        pfailed_bulks t_pltap_output
     ) IS
     BEGIN
-        print(get_results(pcount_ok, pfailed_ids), g_current_description);
+        print(get_results(pcount_ok, pfailed_ids, pfailed_bulks), g_current_description);
     END;
 
     PROCEDURE start_test(
@@ -392,6 +407,7 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         g_count_ok := 0;
         g_test_id := 0;
         g_failed_ids.DELETE;
+        g_failed_bulks.delete;
         set_description(pdescription);
     END start_test;
 
@@ -418,7 +434,7 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
     PROCEDURE end_test AS
     BEGIN
         g_end_test_time := current_timestamp;
-        print_results(g_count_ok, g_failed_ids);
+        print_results(g_count_ok, g_failed_ids, g_failed_bulks);
         print_timestamp_diff(g_end_test_time, g_start_test_time);
     END end_test;
 
@@ -554,7 +570,8 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
         powner VARCHAR2,
         pprocedure_name VARCHAR2
     ) IS
-        l_statement_to_execute clob := '';-- := 'begin' || chr(13) || 'null;';
+        l_statement_to_execute clob := '';
+        l_buf t_pltap_output := t_pltap_output();
     BEGIN
         for test_procedure in (
             select ap.owner, ap.object_name, ap.procedure_name
@@ -562,25 +579,31 @@ CREATE OR REPLACE PACKAGE BODY pltap AS
             where ap.owner = trim(upper(powner))
             and ap.procedure_name = trim(upper(pprocedure_name)))
         loop
-            l_statement_to_execute := l_statement_to_execute
+            l_statement_to_execute := 'begin'
+                || chr(13)
                 || test_procedure.owner
                 || '.'
                 || test_procedure.object_name
                 || '.'
                 || test_procedure.procedure_name
-                || ';';
-        end loop;
-
-        if l_statement_to_execute is not null then
-            l_statement_to_execute := 'begin'
-                || chr(13)
-                || l_statement_to_execute
-                || chr(13)
+                || ';'
                 || 'end;';
-        end if;
 
-        execute immediate l_statement_to_execute;
-
+            begin
+                execute immediate l_statement_to_execute;
+            exception
+                when others then
+                    g_failed_bulks.extend;
+                    g_failed_bulks(g_failed_bulks.last) := test_procedure.owner
+                        || '.'
+                        || test_procedure.object_name
+                        || '.'
+                        || test_procedure.procedure_name
+                        || '('
+                        || sqlerrm
+                        || ')';
+            end;
+        end loop;
     END;
 
 END pltap;
