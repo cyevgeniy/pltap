@@ -7,102 +7,102 @@
 -- documentation.  No representations are made about the suitability of this
 -- software for any purpose.  It is provided "as is" without express or
 -- implied warranty.
-CREATE OR REPLACE PACKAGE pltap AS
-    TYPE t_pltap_output IS
-        TABLE OF VARCHAR2(4000);
-    PROCEDURE set_output_to_table;
+create or replace package pltap as
 
-    PROCEDURE set_output_to_screen;
+type t_pltap_output is
+    table of varchar2(4000);
+procedure set_output_to_table;
 
-    procedure set_description(
-        pdescription varchar2);
+procedure set_output_to_screen;
 
-    PROCEDURE start_test(
-        pdescription varchar2 default null
-    );
+procedure set_description(
+    pdescription varchar2);
 
-    PROCEDURE start_test (
-        pplan_count NUMBER,
-        pdescription varchar2 default null
-    );
+procedure start_test(
+    pdescription varchar2 default null
+);
 
-    PROCEDURE end_test;
+procedure start_test (
+    pplan_count number,
+    pdescription varchar2 default null
+);
 
-    PROCEDURE set_date_format (
-        pdate_format VARCHAR2
-    );
+procedure end_test;
 
-    PROCEDURE fail (
-        pmessage VARCHAR2
-    );
+procedure set_date_format (
+    pdate_format varchar2
+);
 
-    PROCEDURE pass (
-        pmessage VARCHAR2
-    );
+procedure fail (
+    pmessage varchar2
+);
 
-    PROCEDURE print (
-        poutput t_pltap_output,
-        pdescription VARCHAR2 default null
-    );
+procedure pass (
+    pmessage varchar2
+);
 
-    PROCEDURE ok (
-        pcondition     BOOLEAN,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure print (
+    poutput t_pltap_output,
+    pdescription varchar2 default null
+);
 
-    PROCEDURE eq (
-        pgot           NUMBER,
-        pwant          NUMBER,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure ok (
+    pcondition     boolean,
+    pdescription   varchar2 default null
+);
 
-    PROCEDURE eq (
-        pgot           VARCHAR2,
-        pwant          VARCHAR2,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure eq (
+    pgot           number,
+    pwant          number,
+    pdescription   varchar2 default null
+);
 
-    PROCEDURE eq (
-        pgot           DATE,
-        pwant          DATE,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure eq (
+    pgot           varchar2,
+    pwant          varchar2,
+    pdescription   varchar2 default null
+);
 
-    PROCEDURE neq (
-        pgot           NUMBER,
-        pwant          NUMBER,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure eq (
+    pgot           date,
+    pwant          date,
+    pdescription   varchar2 default null
+);
 
-    PROCEDURE neq (
-        pgot           VARCHAR2,
-        pwant          VARCHAR2,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure neq (
+    pgot           number,
+    pwant          number,
+    pdescription   varchar2 default null
+);
 
-    PROCEDURE neq (
-        pgot           DATE,
-        pwant          DATE,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure neq (
+    pgot           varchar2,
+    pwant          varchar2,
+    pdescription   varchar2 default null
+);
 
-    PROCEDURE results_eq (
-        pqry_1         VARCHAR2,
-        pqry_2         VARCHAR2,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure neq (
+    pgot           date,
+    pwant          date,
+    pdescription   varchar2 default null
+);
 
-    PROCEDURE results_eq (
-        pcursor_1      SYS_REFCURSOR,
-        pcursor_2      SYS_REFCURSOR,
-        pdescription   VARCHAR2 DEFAULT NULL
-    );
+procedure results_eq (
+    pqry_1         varchar2,
+    pqry_2         varchar2,
+    pdescription   varchar2 default null
+);
 
-    PROCEDURE bulk_run(
-        powner VARCHAR2,
-        pprocedure_name VARCHAR2
-    );
+procedure results_eq (
+    pcursor_1      sys_refcursor,
+    pcursor_2      sys_refcursor,
+    pdescription   varchar2 default null
+);
+
+procedure bulk_run(
+    powner varchar2,
+    pprocedure_name varchar2
+);
 
 END pltap;
-
 /
