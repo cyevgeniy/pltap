@@ -1,5 +1,8 @@
-= pltap - lightweight unit testing framework for PL/SQL
+= Pltap - lightweight unit testing framework for PL/SQL
 
+Pltap is a lightweight libruary for PL/SQL unit testing.
+It aims to be simple, easy to start and to have non-bloated
+API.
 
 == Install                                                             
 
@@ -24,6 +27,263 @@ In Sqlplus, run:
 ----
 @uninstall.sql
 ----
+
+
+== API
+
+Testing is just a comparison of and expected value
+against and actual one, and almost all testing
+procedures just compares theirs parameters.
+
+Tests' results may be printed via dbms_output(default option) or saved
+in the `pltap_results` table.
+
+Pltap uses https://testanything.org[TAP]-like format for reporting, which in general looks like this:
+
+----
+ok 1: Test case 1 description
+ok 2: Test case 2 description
+not ok 3: Test case 3 description
+not ok 4: Test case 4 description
+# Expected:123
+# Got: 122
+FAILED: 3,4
+Failed 2/4 50% ok
+0 hours 0 minutes 0.122 seconds
+----
+
+=== set_output_to_table()
+
+Redirect output to the `pltap_results` table.
+
+Generally, you want to call this procedure in the beginning of your
+tests execution:
+
+----
+begin
+    pltap.set_output_to_table();
+    pltap.start_test();
+    -- Test statements
+    -- .....
+    pltap.end_test();
+end;
+----
+
+When ouput is redirected to the table, an optional description to
+the `start_test` procedure may be passed. This description is saved in
+the `description` column and is useful for distinguishing just runned tests
+from the others(previous results, different test suites or probably
+other user's tests).
+
+How to get results from the table:
+
+----
+select description, output_text
+from pltap_results
+order by id;
+----
+
+or
+
+----
+select description, output_text
+from pltap_results
+where description = 'Test HR Module'
+order by id;
+----
+
+Of course, you can clear the table before
+testing:
+
+----
+begin
+	-- Remove all data before testing.
+    delete from pltap_results;
+
+    pltap.set_output_to_table();
+    pltap.start_test();
+    -- Test statements
+    -- .....
+    pltap.end_test();
+end;
+----
+
+Pltap uses autonomous transactions when prints
+results to the table, so any rollback or exception
+will not lead to results loss:
+
+----
+begin
+	savepoint start_test;
+
+	begin
+		pltap.set_output_to_table();
+		pltap.start_test('Test some module');
+
+		-- insert test data
+		insert into hr_statuses
+		values(1, 'pending');
+
+		-- Test statements
+		-- ...
+
+		pltap.end_test();
+	exception
+		when others then
+			pltap.fail('Exception during testing');
+	end;
+
+	rollback to start_test;
+end;
+----
+
+Despite the final rollback, all output will
+be in the table.
+
+=== set_output_to_screen()
+
+Redirect output to the screen.
+
+=== set_description(description)
+
+Updates current description. Description is
+used only when output is redirected to the `pltap_results` table.
+
+Example:
+
+----
+begin
+    pltap.set_output_to_table();
+
+    pltap.start_test();
+
+    pltap.set_description('Test numbers');
+
+	pltap.eq(1, 2, '1 is equal to 2');
+	pltap.eq(5, 5, '5 is equal to 5');
+
+	pltap.set_description('Test strings');
+
+	pltap.eq('one', 'two', 'One is equal to two');
+	pltap.eq('five', 'five', 'Five is equal to five');
+
+    pltap.end_test();
+end;
+----
+
+If we get the results:
+
+----
+select description, output_text
+from pltap_results a
+order by a.id;
+----
+
+They will look like:
+
+----
+DESCRIPTION     OUTPUT_TEXT
+Test numbers    not ok: 1 1 is equal to 2
+Test numbers    # Expected:2
+Test numbers    # Got: 1
+Test numbers    ok 2 5 is equal to 5
+Test strings    not ok: 3 One is equal to two
+Test strings    # Expected: 'two'
+Test strings    # Got: 'one'
+Test strings    ok 4 Five is equal to five
+Test strings    FAILED: 1,3
+Test strings    Failed 2/4 50% ok
+Test strings    0 hours 0 minutes 0.004 seconds
+----
+
+Note that report's summary isn't processed separately -
+it has the same description that was set via last
+`set_description` call.
+
+=== start_test(description default null)
+
+Prepares pltap's state for testing. Internally, this
+procedure clears all buffer variables, resets
+counters, remembers the start time.
+
+Optional description will be used when output is redirected
+to the `pltap_results` table. This code:
+
+----
+begin
+    pltap.start_test('description');
+    -- test statements
+    -- ...
+    pltap.end_test();
+end;
+----
+
+is actually equal to this:
+
+----
+begin
+    pltap.start_test();
+    pltap.set_description('description');
+    -- test statements
+    -- ...
+    pltap.end_test();
+end;
+----
+
+=== start_test(tests_count, description default null)
+
+Like `start_test(description)`, but prints tests count
+in the report's header:
+
+----
+begin
+    pltap.start_test(5);
+    pltap.set_description('description');
+    pltap.eq(1, 1, '1=1');
+    pltap.end_test();
+end;
+----
+
+Output:
+
+----
+1..5
+ok 1 1=1
+Failed 0/1 100% ok
+0 hours 0 minutes 0.000 seconds
+----
+
+=== end_test()
+
+Ends testing and printing report.
+
+=== eq(got, want, description default null)
+
+Compares got and want params. Success if they are
+equal, fail otherwise. Prints additional info
+when values are differ in the form like:
+
+----
+# Expected:4
+# Got: 2
+----
+
+Note that diff isn't printed for blob types.
+
+Supported types: Varchar2, Date, Number, Blob;
+
+Example:
+
+---
+
+
+
+---
+
+
+
+
+
 
 == Examples
 
