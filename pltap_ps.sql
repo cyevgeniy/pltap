@@ -69,6 +69,12 @@ procedure eq (
     pdescription   varchar2 default null
 );
 
+procedure eq(
+    pgot           blob,
+    pwant          blob,
+    pdescription   varchar2 default null
+);
+
 procedure neq (
     pgot           number,
     pwant          number,

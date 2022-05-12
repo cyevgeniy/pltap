@@ -545,6 +545,18 @@ create or replace package body pltap as
         end if;
     end;
 
+    procedure eq(
+        pgot           blob,
+        pwant          blob,
+        pdescription   varchar2 default null
+    ) is
+        l_comp number;
+    begin
+        l_comp := dbms_lob.compare(pgot, pwant);
+
+        ok(l_comp=0, pdescription);
+    end;
+
     procedure neq (
         pgot           number,
         pwant          number,
