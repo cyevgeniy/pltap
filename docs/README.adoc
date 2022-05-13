@@ -4,9 +4,16 @@ Pltap is a lightweight library for PL/SQL unit testing.
 It aims to be simple, easy to start and to have non-bloated
 API.
 
-== Install                                                             
+* <<inst, Install>>
+** <<inst-sqlplus, Via sqlplus>>
+** <<inst-manual, Manual>>
+* <<uninstall, Uninstall>>
+* <<quickstart, Quickstart>>
+* <<api, API>>
 
-=== Via sqlplus
+== Install[[inst]]                                                             
+
+=== Via sqlplus[[inst-sqlplus]]
 
 Run:
 
@@ -14,13 +21,13 @@ Run:
 @install.sql
 ----
 
-=== Manual installation
+=== Manual installation[[inst-manual]]
 	
 First, run `pltap_ddl.sql`.
 Then compile `pltap_ps.sql` and `pltap_pb.sql` files. That's all.
 
 
-== Uninstall
+== Uninstall[[uninstall]]
 
 In Sqlplus, run:
 
@@ -28,9 +35,9 @@ In Sqlplus, run:
 @uninstall.sql
 ----
 
-== Quickstart
+== Quickstart[[quickstart]]
 
-== API
+== API[[api]]
 
 Testing in pltap is just a comparison of and expected value
 against and actual one, and almost all testing
