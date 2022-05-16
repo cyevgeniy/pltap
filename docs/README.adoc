@@ -37,9 +37,49 @@ In Sqlplus, run:
 
 == Quickstart[[quickstart]]
 
+Here is the quick summary example that gives almost full understanding
+of pltap:
+
+----
+declare
+    l_qry1 varchar2(20) := 'select 2 from dual';
+    l_qry2 varchar2(20) := 'select 2 from dual';
+    l_qry3 varchar2(20) := 'select 3 from dual';
+    function test_func return number is
+    begin
+        return 1;
+    end;
+begin
+    pltap.start_test();
+    
+    pltap.eq(2, 3, '2 is equal to 3');
+    pltap.ok(test_func() = 1, 'Result of test_func() is equal to 1');
+    pltap.neq(2, 3, '2 is not equal to 3');
+    pltap.results_eq(l_qry1, l_qry2, 'qry1 returns the same result as qry2');
+    pltap.results_eq(l_qry1, l_qry3, 'qry1 returns the same result as qry3');
+    
+    pltap.end_test();
+end;
+----
+
+This example will produce the following report:
+
+----
+not ok: 1 2 is equal to 3
+# Expected:3
+# Got: 2
+ok 2 Result of test_func() is equal to 1
+ok 3 2 is not equal to 3
+ok 4 qry1 returns the same result as qry2
+not ok: 5 qry1 returns the same result as qry3
+FAILED: 1,5
+Failed 2/5 60% ok
+0 hours 0 minutes 0.001 seconds
+----
+
 == API[[api]]
 
-Testing in pltap is just a comparison of and expected value
+Testing in pltap is just a comparison of an actual and an expected value
 against and actual one, and almost all testing
 procedures just compares theirs parameters.
 
