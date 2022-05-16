@@ -1,9 +1,19 @@
-= pltap - lightweight unit testing framework for PL/SQL
+= Pltap - lightweight unit testing framework for PL/SQL
 
+Pltap is a lightweight library for PL/SQL unit testing.
+It aims to be simple, easy to start and to have non-bloated
+API.
 
-== Install                                                             
+* <<inst, Install>>
+** <<inst-sqlplus, Via sqlplus>>
+** <<inst-manual, Manual>>
+* <<uninstall, Uninstall>>
+* <<quickstart, Quickstart>>
+* <<api, API>>
 
-=== Via sqlplus
+== Install[[inst]]                                                             
+
+=== Via sqlplus[[inst-sqlplus]]
 
 Run:
 
@@ -11,13 +21,13 @@ Run:
 @install.sql
 ----
 
-=== Manual installation
+=== Manual installation[[inst-manual]]
 	
 First, run `pltap_ddl.sql`.
 Then compile `pltap_ps.sql` and `pltap_pb.sql` files. That's all.
 
 
-== Uninstall
+== Uninstall[[uninstall]]
 
 In Sqlplus, run:
 
@@ -25,102 +35,449 @@ In Sqlplus, run:
 @uninstall.sql
 ----
 
-== Examples
+== Quickstart[[quickstart]]
 
-
-=== Easy mode
+Here is the quick summary example that gives almost full understanding
+of pltap:
 
 ----
+declare
+    l_qry1 varchar2(20) := 'select 2 from dual';
+    l_qry2 varchar2(20) := 'select 2 from dual';
+    l_qry3 varchar2(20) := 'select 3 from dual';
+    function test_func return number is
     begin
-        pltap.start_test;
-
-        pltap.eq(2, 3, '2 = 3');
-        pltap.eq('John Doe', 'NotJohnDoe',
-             '"John Doe" is equal to "NotJohnDoe"');
-        pltap.eq(to_date('1981.01.23', 'yyyy.mm.dd'),
-	         to_date('1981.01.23', 'yyyy.mm.dd'),
-		 'Dates are equal'
-        );
-        pltap.ok(Sysdate > sysdate -1, 'Today is later than yesterday');
-
-        pltap.end_test;
+        return 1;
     end;
+begin
+    pltap.start_test();
+    
+    pltap.eq(2, 3, '2 is equal to 3');
+    pltap.ok(test_func() = 1, 'Result of test_func() is equal to 1');
+    pltap.neq(2, 3, '2 is not equal to 3');
+    pltap.results_eq(l_qry1, l_qry2, 'qry1 returns the same result as qry2');
+    pltap.results_eq(l_qry1, l_qry3, 'qry1 returns the same result as qry3');
+    
+    pltap.end_test();
+end;
 ----
 
-This will produce output (via dbms_output.put_line):
+This example will produce the following report:
+
+----
+not ok: 1 2 is equal to 3
+# Expected:3
+# Got: 2
+ok 2 Result of test_func() is equal to 1
+ok 3 2 is not equal to 3
+ok 4 qry1 returns the same result as qry2
+not ok: 5 qry1 returns the same result as qry3
+FAILED: 1,5
+Failed 2/5 60% ok
+0 hours 0 minutes 0.001 seconds
+----
+
+== API[[api]]
+
+Testing in pltap is just a comparison of an actual and an expected value
+against and actual one, and almost all testing
+procedures just compares theirs parameters.
+
+Tests' results may be printed via dbms_output(default option) or saved
+in the `pltap_results` table.
+
+Pltap uses https://testanything.org[TAP]-like format for reporting, which in general looks like this:
+
+----
+ok 1: Test case 1 description
+ok 2: Test case 2 description
+not ok 3: Test case 3 description
+not ok 4: Test case 4 description
+# Expected:123
+# Got: 122
+FAILED: 3,4
+Failed 2/4 50% ok
+0 hours 0 minutes 0.122 seconds
+----
+
+=== set_output_to_table()
+
+Redirects output to the `pltap_results` table.
+
+Generally, you want to call this procedure in the beginning of your
+tests execution:
+
+----
+begin
+    pltap.set_output_to_table();
+    pltap.start_test();
+    -- Test statements
+    -- .....
+    pltap.end_test();
+end;
+----
+
+When ouput is redirected to the table, an optional description to
+the `start_test` procedure may be passed. This description is saved in
+the `description` column and is useful for distinguishing just runned tests
+from the others(previous results, different test suites or probably
+other user's tests).
+
+How to get results from the table:
+
+----
+select description, output_text
+from pltap_results
+order by id;
+----
+
+or
+
+----
+select description, output_text
+from pltap_results
+where description = 'Test HR Module'
+order by id;
+----
+
+Of course, you can clear the table before
+testing:
+
+----
+begin
+	-- Remove all data before testing.
+    delete from pltap_results;
+
+    pltap.set_output_to_table();
+    pltap.start_test();
+    -- Test statements
+    -- .....
+    pltap.end_test();
+end;
+----
+
+Pltap uses autonomous transactions when prints
+results to the table, so any rollback or exception
+will not lead to results loss:
+
+----
+begin
+	savepoint start_test;
+
+	begin
+		pltap.set_output_to_table();
+		pltap.start_test('Test some module');
+
+		-- insert test data
+		insert into hr_statuses
+		values(1, 'pending');
+
+		-- Test statements
+		-- ...
+
+		pltap.end_test();
+	exception
+		when others then
+			pltap.fail('Exception during testing');
+	end;
+
+	rollback to start_test;
+end;
+----
+
+Despite the final rollback, all output will
+be in the table.
+
+=== set_output_to_screen()
+
+Redirect output to the screen.
+
+=== set_description(description)
+
+Updates current description. Description is
+used only when output is redirected to the `pltap_results` table.
+
+Example:
+
+----
+begin
+    pltap.set_output_to_table();
+
+    pltap.start_test();
+
+    pltap.set_description('Test numbers');
+
+	pltap.eq(1, 2, '1 is equal to 2');
+	pltap.eq(5, 5, '5 is equal to 5');
+
+	pltap.set_description('Test strings');
+
+	pltap.eq('one', 'two', 'One is equal to two');
+	pltap.eq('five', 'five', 'Five is equal to five');
+
+    pltap.end_test();
+end;
+----
+
+If we get the results:
+
+----
+select description, output_text
+from pltap_results a
+order by a.id;
+----
+
+They will look like:
+
+----
+DESCRIPTION     OUTPUT_TEXT
+Test numbers    not ok: 1 1 is equal to 2
+Test numbers    # Expected:2
+Test numbers    # Got: 1
+Test numbers    ok 2 5 is equal to 5
+Test strings    not ok: 3 One is equal to two
+Test strings    # Expected: 'two'
+Test strings    # Got: 'one'
+Test strings    ok 4 Five is equal to five
+Test strings    FAILED: 1,3
+Test strings    Failed 2/4 50% ok
+Test strings    0 hours 0 minutes 0.004 seconds
+----
+
+Note that report's summary isn't processed separately -
+it has the same description that was set via last
+`set_description` call.
+
+=== start_test(description default null)
+
+Prepares pltap's state for testing. Internally, this
+procedure clears all variables, resets
+counters and remembers the start time.
+
+Optional description will be used when output is redirected
+to the `pltap_results` table. This code:
+
+----
+begin
+    pltap.start_test('description');
+    -- test statements
+    -- ...
+    pltap.end_test();
+end;
+----
+
+is actually equal to this:
+
+----
+begin
+    pltap.start_test();
+    pltap.set_description('description');
+    -- test statements
+    -- ...
+    pltap.end_test();
+end;
+----
+
+=== start_test(tests_count, description default null)
+
+Like `start_test(description)`, but prints tests count
+in the report's header:
+
+----
+begin
+    pltap.start_test(5);
+    pltap.set_description('description');
+    pltap.eq(1, 1, '1=1');
+    pltap.end_test();
+end;
+----
+
+Output:
+
+----
+1..5
+ok 1 1=1
+Failed 0/1 100% ok
+0 hours 0 minutes 0.000 seconds
+----
+
+=== end_test()
+
+Ends testing and printing report.
+
+=== set_date_format(date_format)
+
+Sets date format that will be used in a report.
+You can think about it as of string that you
+usually pass to to_char() function when convert
+date to string (actually, this is the parameter that
+is passed to `to_char` when printing).
+
+=== fail(description)
+
+Add fail result to a report.
+Can be used, for example, when you want to check some code
+for unexpected exceptions:
+
+----
+declare
+    function test_func(n number) return number is
+	begin
+        if n = 1 then
+            raise zero_divide;
+	    end if;
+
+        return 1;
+    end;
+
+begin
+    pltap.start_test();
+
+	begin
+		pltap.eq(1, test_func(1));
+	exception
+		when others then
+			pltap.fail('Test_func is failed due to unexpected exception');
+	end;
+
+	pltap.eq(1, test_func(0));
+
+    pltap.end_test();
+
+end;
+----
+
+Output:
+
+----
+not ok: 1 Test_func is failed due to unexpected exception
+ok 2
+FAILED: 1
+Failed 1/2 50% ok
+0 hours 0 minutes 0.000 seconds
+----
+
+=== pass(message)
+
+Add successful result to a report.
+
+=== ok(condition, description default null)
+
+Checks if `condition` is `True`. If not,
+test fails. If you don't know which assertion
+procedure to use, use this one.
+
+Examples:
+
+----
+begin
+    pltap.start_test();
+
+    pltap.ok(1=1, '1 = 1');
+    pltap.ok('' is null, 'Empty string is null in Oracle');
+    pltap.ok('John Doe' like '%ohn D%', 'John Doe is like %ohn D%');
+
+	pltap.end_test();
+end;
+----
+
+Output:
+
+----
+ok 1 1 = 1
+ok 2 Empty string is null in Oracle
+ok 3 John Doe is like %ohn D%
+Failed 0/3 100% ok
+0 hours 0 minutes 0.000 seconds
+----
+
+
+=== eq(got, want, description default null)
+
+Compares `got` and `want` params. Succeed, if they are
+equal, fail otherwise. Prints additional info
+when values are differ in the form like:
+
+----
+# Expected:4
+# Got: 2
+----
+
+Note that diff isn't printed for blob types.
+
+Supported types: Varchar2, Date, Number, Blob;
+
+Example:
+
+----
+begin
+	pltap.start_test();
+
+	pltap.eq(2, 3, '2 = 3');
+	pltap.eq('Jonh Doe', 'john doe', 'John Doe = john doe');
+	pltap.eq(sysdate, sysdate + 1);
+
+	pltap.end_test();
+end;
+----
+
+Output:
 
 ----
 not ok: 1 2 = 3
 # Expected:3
 # Got: 2
-not ok: 2 "John Doe" is equal to "NotJohnDoe"
-# Expected: 'NotJohnDoe'
-# Got: 'John Doe'
-ok 3 Dates are equal
-ok 4 Today is later than yesterday
-FAILED: 1,2
-Failed 2/4 50% ok
-0 hours 0 minutes ,001 seconds
+not ok: 2 John Doe = john doe
+# Expected: 'john doe'
+# Got: 'Jonh Doe'
+not ok: 3
+# Expected: 14.05.2022 15:30:16
+# Got: 13.05.2022 15:30:16
+FAILED: 1,2,3
+Failed 3/3 0% ok
+0 hours 0 minutes 0.000 seconds
 ----
 
-=== Test a function
+=== neq(pgot, pwant, description default null)
+
+If pgot *is not equal* to pwant, then succeed. Fails otherwise.
+
+Supported types: Date, Varchar2, Number. *Doesn't work with Blobs*.
+
+
+Example:
 
 ----
-    declare
-        /*
-        || Return true for all non-zero
-        || numbers.
-        */
-        function bool(
-            val number
-        ) return boolean
-        is
-        begin
-            return (val <> 0);
-        end;
+begin
+	pltap.start_test();
 
-    begin
-        pltap.start_test;
+	pltap.neq(2, 2, '2 != 2');
+	pltap.neq('Jonh Doe', 'john doe', 'John Doe != john doe');
+	pltap.neq(sysdate, sysdate + 1);
 
-        -- #bt-1: Pass non-zero number
-        -- Expected result: Function return True
-        pltap.ok(bool(1), 'bt-1: True for positive number');
-
-        -- #bt-2: Pass negative number
-	-- Expected result: True
-	pltap.ok(bool(-20), 'bt-2: True for negative number');
-
-        -- #bt-3: Pass zero
-        -- Expected result: False
-        -- Next 2 examples are the same
-        pltap.ok(not bool(0), 'bt-3: False for zero');
-        pltap.ok(bool(0) = False,  'bt-3: False for zero');
-
-        -- #bt-4: Pass null
-        -- Expected result: False.
-        pltap.ok(bool(null) = False, 'False for null');
-
-        pltap.end_test;
-    end;
+	pltap.end_test();
+end;
 ----
 
-Result:
+Output:
 
 ----
-ok 1 bt-1: True for positive number
-ok 2 bt-2: True for negative number
-ok 3 bt-3: False for zero
-ok 4 bt-3: False for zero
-not ok: 5 False for null
-FAILED: 5
-Failed 1/5 80% ok
-0 hours 0 minutes ,001 seconds
+not ok: 1 2 != 2
+ok 2 John Doe != john doe
+ok 3
+FAILED: 1
+Failed 1/3 66.67% ok
+0 hours 0 minutes 0.000 seconds
 ----
 
-=== Test queries
+=== results_eq(qry1, qry2, description default null)
 
-To test query results, results_eq procedure is used. Queries can
-be passed as sys_refcursors or strings.
+Checks queries for results' equality.
+
+Supported types: Queries can be represented as strings or sys_refcursors.
+
+
+Example:
 
 ----
 declare
@@ -157,7 +514,7 @@ begin
 end;
 ----
 
-Results:
+Output:
 
 ----
 ok 1 Cursors are equal
@@ -167,34 +524,25 @@ Failed 1/2 50% ok
 0 hours 0 minutes 0,002 seconds
 ----
 
-== Save results to the table
+=== bulk_run(owner, procedure_name)
 
-For quick tests it's normal to "print" output via dbms_output
-(This is what pltap does by default), but for large test
-sets it's not a deal. In such cases we can save results in the pltap_results table:
-
-----
-begin
-	pltap.start_test;
-
-	pltap.set_output_to_table; -- 'Redirect' output to table
-
-	pltap.ok(true, 'true is true');
-	pltap.eq(2, 3, '2 = 3');
-	pltap.eq('John', 'John', 'John is John');
-
-	pltap.end_test;
-
-end;
-----
-
-After that, we can see result:
+Runs all owner's procedures with specified name.
+During execution, if any exceptions occur, test case will not
+be listed as failed in the report, instead all failed procedures
+will be listead in the report's summary:
 
 ----
-select *
-from pltap_results
-order by id
+......
+FAILED: 270,272
+Failed 2/299 99.33% ok
+WARNING: Some packages weren't tested because of exceptions in theirs test
+procedures:
+OWNER.MY_PACKAGE.TEST_PACKAGE(ORA-01843: not a valid month)
+0 hours 0 minutes 1.314 seconds
 ----
+
+== More examples
+
 
 == Run tests automatically
 
